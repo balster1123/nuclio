@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG GOARCH=amd64
 ARG NUCLIO_PYTHON_VERSION=3
 ARG NUCLIO_PYTHON_OS=alpine3.6
 
@@ -19,13 +20,15 @@ ARG NUCLIO_PYTHON_OS=alpine3.6
 # Build stage: builds the processor binary
 #
 
-FROM nuclio/processor as build
+FROM nuclio/processor:latest-${GOARCH} as build
 
 #
 # Output stage
 #
 
-FROM python:${NUCLIO_PYTHON_VERSION}-${NUCLIO_PYTHON_OS}
+FROM ${GOARCH}/python:${NUCLIO_PYTHON_VERSION}-${NUCLIO_PYTHON_OS}
+
+ENV GOOS=${GOOS} GOARCH=${GOARCH}
 
 COPY --from=build /go/src/github.com/nuclio/nuclio/processor /usr/local/bin/processor
 COPY pkg/processor/runtime/python/wrapper.py /opt/nuclio/wrapper.py

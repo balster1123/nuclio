@@ -24,7 +24,7 @@ RUN apk --update --no-cache add \
 #
 
 # if build passes NUCLIO_ARCH, use it as GOARCH
-ARG NUCLIO_ARCH
+ARG NUCLIO_ARCH=amd64
 ENV GOARCH ${NUCLIO_ARCH}
 
 # This script builds the processor and redirects the build logs into /handler_build.log
@@ -56,6 +56,6 @@ RUN mkdir -p /etc/nuclio
 RUN mkdir -p /opt/nuclio
 
 # make the processor binary
-RUN GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-s -w" -o processor cmd/processor/main.go \
+RUN GOOS=${GOOS} GOARCH=${GOARCH} go build -a -installsuffix cgo -ldflags="-s -w" -o processor cmd/processor/main.go \
     && cp -v /go/src/github.com/nuclio/nuclio/processor /usr/local/bin \
     && rm -r /go/src/github.com/nuclio/nuclio

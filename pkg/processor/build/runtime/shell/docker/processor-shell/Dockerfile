@@ -16,7 +16,9 @@
 # Build stage: builds the processor binary
 #
 
-FROM nuclio/processor as build
+ARG GOARCH=amd64
+
+FROM nuclio/processor:latest-${GOARCH} as build
 
 #
 # Output stage
