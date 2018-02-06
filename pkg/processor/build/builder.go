@@ -681,6 +681,12 @@ func (b *Builder) createProcessorDockerfile() (string, error) {
 
 	imageSpecificVars := b.getImageSpecificEnvVars(baseImageName)
 
+	targetVersion, err := version.Get()
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to get version info")
+	}
+	imageSpecificVars =append(imageSpecificVars, fmt.Sprintf("GOOS=%s GOARCH=%s", targetVersion.OS, targetVersion.Arch))
+
 	processorDockerfileTemplateFuncs := template.FuncMap{
 		"pathBase":      path.Base,
 		"isDir":         common.IsDir,
