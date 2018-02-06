@@ -41,6 +41,7 @@ import (
 	_ "github.com/nuclio/nuclio/pkg/processor/build/runtime/python"
 	_ "github.com/nuclio/nuclio/pkg/processor/build/runtime/shell"
 	"github.com/nuclio/nuclio/pkg/processor/build/util"
+	"github.com/nuclio/nuclio/pkg/version"
 
 	"github.com/nuclio/logger"
 	"gopkg.in/yaml.v2"
@@ -110,6 +111,10 @@ func (b *Builder) Build(options *platform.BuildOptions) (*platform.BuildResult, 
 	var err error
 
 	b.options = options
+
+	if b.options.FunctionConfig.Spec.Build.Architecture != "" {
+		version.SetArch(b.options.FunctionConfig.Spec.Build.Architecture)
+	}
 
 	b.logger.InfoWith("Building", "name", b.options.FunctionConfig.Meta.Name)
 
@@ -296,7 +301,12 @@ func (b *Builder) enrichConfiguration() error {
 
 	// if tag isn't set - use "latest"
 	if b.processorImage.imageTag == "" {
-		b.processorImage.imageTag = "latest"
+		targetVersion, err := version.Get()
+		if err != nil {
+			return errors.Wrap(err, "Failed to get version info")
+		}
+
+		b.processorImage.imageTag = fmt.Sprintf("latest-%s", targetVersion.Arch)
 	}
 
 	// if the registry URL is prefixed with https:// or http://, remove it

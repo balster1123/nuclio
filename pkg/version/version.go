@@ -83,6 +83,11 @@ func Set(info *Info) error {
 	return nil
 }
 
+// SetArch will update the stored processor architecture, used for building for different architectures
+func SetArch(newArch string) {
+	arch = newArch
+}
+
 // Log will log the version, or an error
 func Log(logger logger.Logger) {
 	versionInfo, err := Get()
