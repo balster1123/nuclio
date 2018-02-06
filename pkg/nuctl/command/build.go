@@ -86,6 +86,7 @@ func addBuildFlags(cmd *cobra.Command, config *functionconfig.Config, commands *
 	cmd.Flags().StringVarP(&config.Spec.Build.ImageName, "image", "i", "", "Name of a Docker image (default - the function name)")
 	cmd.Flags().StringVar(&config.Spec.Build.ImageVersion, "version", "latest", "Version of the Docker image")
 	cmd.Flags().StringVarP(&config.Spec.Build.OutputType, "output", "o", "docker", "Type of the build output - \"docker\" or \"binary\"")
+	cmd.Flags().StringVarP(&config.Spec.Build.Architecture, "architecture", "", "", "Architecture under which to compile the function (default - local machine architecture)")
 	cmd.Flags().StringVarP(&config.Spec.Build.Registry, "registry", "r", os.Getenv("NUCTL_REGISTRY"), "URL of a container registry (env: NUCTL_REGISTRY)")
 	cmd.Flags().StringVar(&config.Spec.Build.NuclioSourceDir, "nuclio-src-dir", "", "Path to a local directory that contains nuclio sources (avoid cloning)")
 	cmd.Flags().StringVar(&config.Spec.Build.NuclioSourceURL, "nuclio-src-url", "https://github.com/nuclio/nuclio.git", "URL of nuclio sources for git clone")

@@ -124,6 +124,7 @@ type Build struct {
 	OutputType         string            `json:"outputType,omitempty"`
 	NuclioSourceDir    string            `json:"nuclioSourceDir,omitempty"`
 	NuclioSourceURL    string            `json:"nuclioSourceURL,omitempty"`
+	Architecture       string            `json:"architecture,omitempty"`
 	TempDir            string            `json:"tempDir,omitempty"`
 	Registry           string            `json:"registry,omitempty"`
 	ImageName          string            `json:"imageName,omitempty"`
