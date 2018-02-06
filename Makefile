@@ -75,7 +75,8 @@ build: docker-images tools
 DOCKER_IMAGES_RULES = \
     controller \
     playground \
-    processor-py \
+    processor-py-alpine \
+    processor-py-jessie \
     handler-builder-golang-onbuild \
     processor-shell \
     processor-pypy \
@@ -111,8 +112,15 @@ nuctl: ensure-gopath
 	@rm -f $(NUCTL_TARGET)
 	@ln -sF $(GOPATH)/bin/$(NUCTL_BIN_NAME) $(NUCTL_TARGET)
 
+# Processor
+
+NUCLIO_DOCKER_PROCESSOR_IMAGE_NAME=nuclio/processor:$(NUCLIO_DOCKER_IMAGE_TAG_WITH_ARCH)
 processor: ensure-gopath
-	docker build -f cmd/processor/Dockerfile -t nuclio/processor .
+	docker build -f cmd/processor/Dockerfile \
+		--build-arg NUCLIO_IMAGE_PROCESSOR=${NUCLIO_ARCH} \
+		--build-arg GOOS=${NUCLIO_OS} \
+		--build-arg GOARCH=arm \
+		 -t $(NUCLIO_DOCKER_PROCESSOR_IMAGE_NAME) .
 
 #
 # Dockerized services
@@ -123,6 +131,7 @@ NUCLIO_DOCKER_CONTROLLER_IMAGE_NAME=nuclio/controller:$(NUCLIO_DOCKER_IMAGE_TAG_
 
 controller: ensure-gopath
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
 		-f cmd/controller/Dockerfile \
 		-t $(NUCLIO_DOCKER_CONTROLLER_IMAGE_NAME) \
 		$(NUCLIO_DOCKER_LABELS) .
@@ -134,6 +143,7 @@ NUCLIO_DOCKER_PLAYGROUND_IMAGE_NAME=nuclio/playground:$(NUCLIO_DOCKER_IMAGE_TAG_
 
 playground: ensure-gopath
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
 		-f cmd/playground/Dockerfile \
 		-t $(NUCLIO_DOCKER_PLAYGROUND_IMAGE_NAME) \
 		$(NUCLIO_DOCKER_LABELS) .
@@ -147,11 +157,15 @@ NUCLIO_DOCKER_PROCESSOR_PY3_ALPINE_IMAGE_NAME=nuclio/processor-py3.6-alpine:$(NU
 NUCLIO_DOCKER_PROCESSOR_PY2_JESSIE_IMAGE_NAME=nuclio/processor-py2.7-jessie:$(NUCLIO_DOCKER_IMAGE_TAG_WITH_ARCH)
 NUCLIO_DOCKER_PROCESSOR_PY3_JESSIE_IMAGE_NAME=nuclio/processor-py3.6-jessie:$(NUCLIO_DOCKER_IMAGE_TAG_WITH_ARCH)
 
-processor-py: processor
+processor-py: processor processor-py-alpine processor-py-jessie
+
+processor-py-alpine: processor
 
 	# build python 2.7/alpine
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
 		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		--build-arg GOOS=${NUCLIO_OS} \
 		--build-arg NUCLIO_PYTHON_VERSION=2.7 \
 		--build-arg NUCLIO_PYTHON_OS=alpine3.6 \
 		-t $(NUCLIO_DOCKER_PROCESSOR_PY2_ALPINE_IMAGE_NAME) .
@@ -159,13 +173,19 @@ processor-py: processor
 	# build python 3/alpine
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
 		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		--build-arg GOOS=${NUCLIO_OS} \
 		--build-arg NUCLIO_PYTHON_VERSION=3.6 \
 		--build-arg NUCLIO_PYTHON_OS=alpine3.6 \
 		-t $(NUCLIO_DOCKER_PROCESSOR_PY3_ALPINE_IMAGE_NAME) .
 
+processor-py-jessie: processor
+
 	# build python 2/jesse
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
 		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		--build-arg GOOS=${NUCLIO_OS} \
 		--build-arg NUCLIO_PYTHON_VERSION=2.7 \
 		--build-arg NUCLIO_PYTHON_OS=slim-jessie \
 		-t $(NUCLIO_DOCKER_PROCESSOR_PY2_JESSIE_IMAGE_NAME) .
@@ -173,9 +193,56 @@ processor-py: processor
 	# build python 3/jesse
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
 		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		--build-arg GOOS=${NUCLIO_OS} \
 		--build-arg NUCLIO_PYTHON_VERSION=3.6 \
 		--build-arg NUCLIO_PYTHON_OS=slim-jessie \
 		-t $(NUCLIO_DOCKER_PROCESSOR_PY3_JESSIE_IMAGE_NAME) .
+
+NUCLIO_DOCKER_PROCESSOR_PY2_ARM_ALPINE_IMAGE_NAME=nuclio/processor-py2.7-alpine:$(NUCLIO_DOCKER_IMAGE_TAG)-arm32v6
+NUCLIO_DOCKER_PROCESSOR_PY3_ARM_ALPINE_IMAGE_NAME=nuclio/processor-py3.6-alpine:$(NUCLIO_DOCKER_IMAGE_TAG)-arm32v6
+NUCLIO_DOCKER_PROCESSOR_PY2_ARM_JESSIE_IMAGE_NAME=nuclio/processor-py2.7-jessie:$(NUCLIO_DOCKER_IMAGE_TAG)-arm32v7
+NUCLIO_DOCKER_PROCESSOR_PY3_ARM_JESSIE_IMAGE_NAME=nuclio/processor-py3.6-jessie:$(NUCLIO_DOCKER_IMAGE_TAG)-arm32v7
+
+processor-py-arm: processor
+
+	# build python 2.7/alpine
+	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=arm32v6 \
+		--build-arg GOOS=${NUCLIO_OS} \
+		--build-arg NUCLIO_PYTHON_VERSION=2.7 \
+		--build-arg NUCLIO_PYTHON_OS=alpine3.6 \
+		-t $(NUCLIO_DOCKER_PROCESSOR_PY2_ARM_ALPINE_IMAGE_NAME) .
+
+	# build python 3/alpine
+	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=arm32v6 \
+		--build-arg GOOS=${NUCLIO_OS} \
+		--build-arg NUCLIO_PYTHON_VERSION=3.6 \
+		--build-arg NUCLIO_PYTHON_OS=alpine3.6 \
+		-t $(NUCLIO_DOCKER_PROCESSOR_PY3_ARM_ALPINE_IMAGE_NAME) .
+
+	# build python 2/jesse
+	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=arm32v7 \
+		--build-arg GOOS=${NUCLIO_OS} \
+		--build-arg NUCLIO_PYTHON_VERSION=2.7 \
+		--build-arg NUCLIO_PYTHON_OS=slim-jessie \
+		-t $(NUCLIO_DOCKER_PROCESSOR_PY2_ARM_JESSIE_IMAGE_NAME) .
+
+	# build python 3/jesse
+	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
+		-f ${NUCLIO_PROCESSOR_PY_DOCKERFILE_PATH} \
+		--build-arg GOARCH=arm32v7 \
+		--build-arg GOOS=${NUCLIO_OS} \
+		--build-arg NUCLIO_PYTHON_VERSION=3.6 \
+		--build-arg NUCLIO_PYTHON_OS=slim-jessie \
+		-t $(NUCLIO_DOCKER_PROCESSOR_PY3_ARM_JESSIE_IMAGE_NAME) .
+
+
 
 IMAGES_TO_PUSH += \
 	$(NUCLIO_DOCKER_PROCESSOR_PY2_ALPINE_IMAGE_NAME) \
@@ -188,6 +255,7 @@ NUCLIO_DOCKER_HANDLER_BUILDER_GOLANG_ONBUILD_IMAGE_NAME=nuclio/handler-builder-g
 
 handler-builder-golang-onbuild: ensure-gopath
 	docker build --build-arg NUCLIO_ARCH=$(NUCLIO_ARCH) \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
 		-f pkg/processor/build/runtime/golang/docker/onbuild/Dockerfile \
 		-t $(NUCLIO_DOCKER_HANDLER_BUILDER_GOLANG_ONBUILD_IMAGE_NAME) .
 
@@ -199,6 +267,7 @@ NUCLIO_DOCKER_PROCESSOR_PYPY_JESSIE_IMAGE_NAME=nuclio/processor-pypy2-5.9-jessie
 processor-pypy:
 	docker build $(NUCLIO_BUILD_ARGS) \
 		-f pkg/processor/build/runtime/pypy/docker/Dockerfile.processor-pypy \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
 		--build-arg NUCLIO_PYPY_VERSION=2-5.9 \
 		--build-arg NUCLIO_PYPY_OS=jessie \
 		-t $(NUCLIO_DOCKER_PROCESSOR_PYPY_JESSIE_IMAGE_NAME) .
@@ -210,6 +279,7 @@ NUCLIO_DOCKER_HANDLER_BUILDER_PYPY_ONBUILD_IMAGE_NAME=nuclio/handler-pypy2-5.9-j
 handler-pypy:
 	docker build \
 		-f pkg/processor/build/runtime/pypy/docker/Dockerfile.handler-pypy \
+		--build-arg GOARCH=${NUCLIO_ARCH} \
 		--build-arg NUCLIO_DOCKER_IMAGE_TAG_WITH_ARCH=$(NUCLIO_DOCKER_IMAGE_TAG_WITH_ARCH) \
 		-t $(NUCLIO_DOCKER_HANDLER_BUILDER_PYPY_ONBUILD_IMAGE_NAME) .
 
@@ -222,8 +292,9 @@ NUCLIO_DOCKER_PROCESSOR_SHELL_ALPINE_IMAGE_NAME=nuclio/processor-shell-alpine:$(
 processor-shell: processor
 	# build shell/alpine
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
-	-f $(NUCLIO_PROCESSOR_SHELL_DOCKERFILE_PATH) \
-	-t $(NUCLIO_DOCKER_PROCESSOR_SHELL_ALPINE_IMAGE_NAME) .
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		-f $(NUCLIO_PROCESSOR_SHELL_DOCKERFILE_PATH) \
+		-t $(NUCLIO_DOCKER_PROCESSOR_SHELL_ALPINE_IMAGE_NAME) .
 
 IMAGES_TO_PUSH += $(NUCLIO_DOCKER_PROCESSOR_SHELL_ALPINE_IMAGE_NAME)
 
@@ -233,8 +304,9 @@ NUCLIO_DOCKER_HANDLER_NODEJS_ALPINE_IMAGE_NAME=nuclio/handler-nodejs:$(NUCLIO_DO
 
 handler-nodejs: processor
 	docker build $(NUCLIO_BUILD_ARGS_VERSION_INFO_FILE) \
-	-f $(NUCLIO_HANDLER_NODEJS_DOCKERFILE_PATH) \
-	-t $(NUCLIO_DOCKER_HANDLER_NODEJS_ALPINE_IMAGE_NAME) .
+		--build-arg GOARCH=${NUCLIO_ARCH} \
+		-f $(NUCLIO_HANDLER_NODEJS_DOCKERFILE_PATH) \
+		-t $(NUCLIO_DOCKER_HANDLER_NODEJS_ALPINE_IMAGE_NAME) .
 
 IMAGES_TO_PUSH += $(NUCLIO_DOCKER_HANDLER_NODEJS_ALPINE_IMAGE_NAME)
 
